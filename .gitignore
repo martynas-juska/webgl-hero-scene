@@ -19,3 +19,8 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Mac metadata
+__MACOSX/
+._*
+.DS_Store
