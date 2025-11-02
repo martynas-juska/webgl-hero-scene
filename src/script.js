@@ -14,8 +14,8 @@ import slicedFragmentShader from './shaders/sliced/fragment.glsl'
  */
 const CONFIG = {
   // Camera distance limits
-  MIN_ZOOM_DISTANCE: 8,
-  MAX_ZOOM_DISTANCE: 25,
+//   MIN_ZOOM_DISTANCE: 8,
+//   MAX_ZOOM_DISTANCE: 25,
   
   // Intersection Observer threshold
   VISIBILITY_THRESHOLD: 0.1,
@@ -34,7 +34,6 @@ const CONFIG = {
     return import.meta.env.DEV 
       ? './gears.glb' 
       : 'https://webgl-hero-scene.vercel.app/gears.glb'
-      
   },
   
   // Performance settings
@@ -102,6 +101,7 @@ function initializeContainer() {
       width: 100%;
       height: 100%;
       outline: none;
+      cursor: grab;
     `
     
     container.appendChild(canvas)
@@ -120,6 +120,7 @@ function initializeContainer() {
         width: 100%;
         height: 100%;
         outline: none;
+        cursor: grab;
       `
       document.body.appendChild(canvas)
     }
@@ -135,70 +136,6 @@ function initializeContainer() {
   })
   
   return { container, canvas, mode }
-}
-
-/**
- * ============================================================================
- * SCROLL MANAGER
- * ============================================================================
- */
-class ScrollManager {
-  constructor(controls, canvas, mode) {
-    this.controls = controls
-    this.canvas = canvas
-    this.mode = mode
-    this.isAtMaxZoom = false
-    this.isScrollingPage = false
-    this.scrollPassThroughEnabled = mode === 'webflow'
-    
-    if (this.scrollPassThroughEnabled) {
-      this.init()
-    }
-  }
-  
-  init() {
-    this.controls.addEventListener('change', () => {
-      this.checkZoomLevel()
-    })
-    
-    this.canvas.addEventListener('wheel', (event) => {
-      this.handleWheelEvent(event)
-    }, { passive: false })
-    
-    Logger.success('Scroll manager initialized')
-  }
-  
-  checkZoomLevel() {
-    const distance = this.controls.object.position.distanceTo(this.controls.target)
-    const wasAtMax = this.isAtMaxZoom
-    
-    this.isAtMaxZoom = distance >= CONFIG.MAX_ZOOM_DISTANCE * 0.99
-    
-    if (this.isAtMaxZoom && !wasAtMax) {
-      Logger.info('Max zoom reached - scroll pass-through enabled')
-    } else if (!this.isAtMaxZoom && wasAtMax) {
-      Logger.info('Zoom level reduced - camera control active')
-    }
-  }
-  
-  handleWheelEvent(event) {
-    if (!this.scrollPassThroughEnabled) return
-    
-    const distance = this.controls.object.position.distanceTo(this.controls.target)
-    const isZoomingOut = event.deltaY > 0
-    const isAtMaxDistance = distance >= CONFIG.MAX_ZOOM_DISTANCE * 0.99
-    
-    if (isAtMaxDistance && isZoomingOut) {
-      if (!this.isScrollingPage) {
-        Logger.info('Scroll passed to page')
-        this.isScrollingPage = true
-      }
-      return
-    }
-    
-    this.isScrollingPage = false
-    event.preventDefault()
-  }
 }
 
 /**
@@ -484,12 +421,11 @@ controls.enableDamping = true
 controls.dampingFactor = 0.08
 controls.autoRotate = false
 controls.target.set(0, 0, 0)
-controls.minDistance = CONFIG.MIN_ZOOM_DISTANCE
-controls.maxDistance = CONFIG.MAX_ZOOM_DISTANCE
+controls.enableZoom = false  // ← DISABLE ZOOM
 controls.maxPolarAngle = Math.PI * 0.75
 controls.update()
 
-Logger.info(`Zoom limits: ${CONFIG.MIN_ZOOM_DISTANCE} - ${CONFIG.MAX_ZOOM_DISTANCE}`)
+// Logger.info(`Zoom limits: ${CONFIG.MIN_ZOOM_DISTANCE} - ${CONFIG.MAX_ZOOM_DISTANCE}`)
 
 /**
  * Renderer
@@ -512,7 +448,7 @@ renderer.setPixelRatio(sizes.pixelRatio)
 /**
  * Initialize managers
  */
-const scrollManager = new ScrollManager(controls, canvas, mode)
+// const scrollManager = new ScrollManager(controls, canvas, mode)
 const visibilityManager = new VisibilityManager(container, handleVisibilityChange, mode)
 
 /**
@@ -585,31 +521,42 @@ function resumeRotation() {
   }
 }
 
-// Mouse tracking
+// ═══════════════════════════════════════════════════════
+// CURSOR MANAGEMENT - Grab & Grabbing
+// ═══════════════════════════════════════════════════════
 canvas.addEventListener('mousedown', (event) => {
-  if(event.button === 0) isMouseDown = true
+  if(event.button === 0) {
+    isMouseDown = true
+    canvas.style.cursor = 'grabbing'  // ← Grabbing cursor
+  }
 })
 
 canvas.addEventListener('mouseup', () => {
   isMouseDown = false
+  canvas.style.cursor = 'grab'  // ← Back to grab cursor
 })
 
 canvas.addEventListener('mouseleave', () => {
   isMouseDown = false
+  canvas.style.cursor = 'grab'  // ← Back to grab cursor
   if(userInteracting) resumeRotation()
 })
+
 
 // Touch tracking
 canvas.addEventListener('touchstart', () => {
   isTouching = true
+  canvas.style.cursor = 'grabbing'  // ← Mobile grabbing
 })
 
 canvas.addEventListener('touchend', () => {
   isTouching = false
+  canvas.style.cursor = 'grab'  // ← Back to grab
 })
 
 canvas.addEventListener('touchcancel', () => {
   isTouching = false
+  canvas.style.cursor = 'grab'  // ← Back to grab
 })
 
 // OrbitControls listeners
