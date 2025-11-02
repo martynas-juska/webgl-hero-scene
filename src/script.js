@@ -27,13 +27,14 @@ const CONFIG = {
   get DRACO_PATH() {
     return import.meta.env.DEV 
       ? './draco/' 
-      : 'https://YOUR-PROJECT.vercel.app/draco/'
+      : 'https://webgl-hero-scene.vercel.app/draco/'
   },
   
   get MODEL_PATH() {
     return import.meta.env.DEV 
       ? './gears.glb' 
-      : 'https://YOUR-PROJECT.vercel.app/gears.glb'
+      : 'https://webgl-hero-scene.vercel.app/gears.glb'
+      
   },
   
   // Performance settings
